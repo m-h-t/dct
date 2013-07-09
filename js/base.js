@@ -21,6 +21,18 @@ function getGreyscaleArray(inputPixelArray) {
 	return resultPixels;
 }
 
+function getRgbaArray(greyscaleArray, outputPixelArray) {
+	var rgbaArray = new Uint8ClampedArray(greyscaleArray.length * 4);
+	
+	for (var i = 0; i < greyscaleArray.length; i++) {
+		outputPixelArray[(4 * i)] = greyscaleArray[i];
+		outputPixelArray[(4 * i) + 1] = greyscaleArray[i];
+		outputPixelArray[(4 * i) + 2] = greyscaleArray[i];
+		
+		outputPixelArray[(4 * i) + 3] = 255;
+	}
+}
+
 function getEntropy(pixelArray) {
 	var entropy = 0;
 	var frequencies = new Float32Array(265);
@@ -69,12 +81,12 @@ function getBlocks(pixelArray, width, height) {
 	var width8 = width - (width % 8);
 	var height8 = height - (height % 8);
 	
-	var dctBlocks = new Array(width8 * height8);
+	var dctBlocks = new Array((width8 / 8) * (height8 / 8));
 	
 	// loop over all blocks
 	for (var y = 0; y < (height8 / 8); y++) {
 		for (var x = 0; x < (width8 / 8); x++) {
-			var blockNo = y * height8 + x;
+			var blockNo = y * (width8 / 8) + x;
 			
 			dctBlocks[blockNo] = new Array(64);
 			
@@ -90,6 +102,35 @@ function getBlocks(pixelArray, width, height) {
 	}	 
 	
 	return dctBlocks;	
+}
+
+function getPixelArrayFromBlocks(blocks, width, height) {
+	var pixelArray = new Uint32Array(width * height);
+	
+	var width8 = width - (width % 8);
+	var height8 = height - (height % 8);
+	
+	// loop over all blocks
+	for (var y = 0; y < (height8 / 8); y++) {
+		for (var x = 0; x < (width8 / 8); x++) {
+			var blockNo = y * (width8 / 8) + x;
+			
+			//dctBlocks[blockNo] = new Array(64);
+			
+			// loop over single bock
+			for (var i = 0; i < 8; i++) {
+				for (var j = 0; j < 8; j++) {
+					// pixPos = block position + position inside of the block
+					var pixPos = (y * 8 * width8) + (i * width8) + (x * 8) + j; 
+					
+					// OFFSET
+					pixelArray[pixPos] = blocks[blockNo][i * 8 + j] + 128;
+				}
+			}
+		}
+	}	 
+	
+	return pixelArray;	
 }
 
 function normFactor(ci) {
@@ -108,7 +149,9 @@ function getDctCoefficientBlock(pixelBlock) {
 			
 			for (var n = 0; n < 8; n++) {
 				for (var m = 0; m < 8; m++) {
-					coefficientBlock[l * 8 + k] += (1/64) * pixelBlock[n * 8 + m] * dctBasisFunction(l, k, n, m);
+					var dctBasis = dctBasisFunction(l, k, n, m);
+				
+					coefficientBlock[l * 8 + k] += (1/64) * pixelBlock[n * 8 + m] * dctBasis;
 				}
 			}
 		}
@@ -116,6 +159,7 @@ function getDctCoefficientBlock(pixelBlock) {
 	
 	return coefficientBlock;
 }
+
 
 window.onload = function() {
 
@@ -166,22 +210,48 @@ window.onload = function() {
 			
 			var imageData = contextInput.getImageData(0, 0, img.width, img.height);
 			var pixelArray = imageData.data;
+			
+			var coefficientData = contextInput.createImageData(img.width, img.height);
+			var coefficientPixelArray = coefficientData.data;
+			
 			var outputData = contextInput.createImageData(img.width, img.height);
 			var outputPixelArray = outputData.data;
 			
 			getGreyscaleImg(pixelArray, outputPixelArray);
 			
+			var greyscaleValueArray = getGreyscaleArray(outputPixelArray);
 			
-			var blocks = getBlocks(getGreyscaleArray(pixelArray), img.width, img.height);
+			// split image into 8 x 8 blocks
+			var blocks = getBlocks(greyscaleValueArray, img.width, img.height);
 			
-			console.debug(getDctCoefficientBlock(blocks[0]));
+			// calculate coefficient block for each block
+			var coefficientBlocks = new Array();
+			for (var i = 0; i < blocks.length; i++) {
+				coefficientBlocks[i] = getDctCoefficientBlock(blocks[i]);
+			}
+			
+			var coefficientValues = getPixelArrayFromBlocks(coefficientBlocks, img.width, img.height);
+			//coefficientPixelArray = getRgbaArray(coefficientValues);
+			
+			//var rgbaArray = getRgbaArray(coefficientValues);
+			
+			//coefficientPixelArray = rgbaArray;
+			//outputPixelArray = rgbaArray;
+			
+			
+			 getRgbaArray(coefficientValues, coefficientPixelArray);
+			
+			//console.debug(getDctCoefficientBlock(blocks[0]));
 			
 			// write data to canvas
 			contextOutput.putImageData(outputData,0,0);
+			contextCoefficient.putImageData(coefficientData, 0, 0);
+
 			
 			// print entropy
 			document.getElementById("entropy-input").innerHTML = getEntropy(pixelArray) + " (red channel)";
 			document.getElementById("entropy-output").innerHTML = getEntropy(outputPixelArray);
+			document.getElementById("entropy-coefficient").innerHTML = getEntropy(coefficientPixelArray);
 		};
 		
 		
