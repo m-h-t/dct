@@ -49,12 +49,19 @@ function getEntropy(pixelArray) {
 }
 
 function logPixelArray(pixelArray) {
-	for (var i = 0; i < 200; i++) {
+	for (var i = 0; i < pixelArray.length || 200; i++) {
 		var text = "R: " + pixelArray[i] + " G: " + pixelArray[i+1] +
 			" B: " + pixelArray[i+2] + " A: " + pixelArray[i+3];
 			i += 3;
 		console.log(text);
 	}
+}
+
+
+/***** 8 * 8 DCT ********/
+
+function dctBasicFunction(l, k, n, m) {
+	return Math.cos( ((2*m + l) * k * Math.PI) / 16) * Math.cos( ((2*n + l) * l * Math.PI) / 16);	
 }
 
 window.onload = function() {
@@ -108,9 +115,6 @@ window.onload = function() {
 			var pixelArray = imageData.data;
 			var outputData = contextInput.createImageData(img.width, img.height);
 			var outputPixelArray = outputData.data;
-		
-			
-			
 			
 			getGreyscaleImg(pixelArray, outputPixelArray);
 			
