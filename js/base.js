@@ -17,30 +17,42 @@ window.onload = function() {
 	var reader = new FileReader();
 	reader.onload = function(event) {
 		var dataURI = event.target.result;
-		var canvas = document.getElementById("canvas");
-		var context = canvas.getContext("2d");
-		var img = new Image();
 		
+		var canvasInput = document.getElementById("canvas-input");
+		var context = canvasInput.getContext("2d");
+		
+		var canvasCoefficient = document.getElementById("canvas-coefficient");
+		var contextCoefficient = canvasCoefficient.getContext("2d");
+		
+		var canvasOutput = document.getElementById("canvas-output");
+		var contextOutput = canvasOutput.getContext("2d");
+		
+		var img = new Image();
 		img.src = dataURI;
 		
-		context.clearRect(0,0, 400, 400);
+		//context.clearRect(0,0, 400, 400);
 		
 		//canvas.height = img.height;
 		//canvas.width = img.width;
 		
 		// wait till image is loaded
 		img.onload = function() {
-			//canvas.height = img.height;
-			//canvas.width = img.width;
+			canvasInput.height = img.height;
+			canvasInput.width = img.width;
+			
+			canvasCoefficient.height = img.height;
+			canvasCoefficient.width = img.width;
+			
+			canvasOutput.height = img.height;
+			canvasOutput.width = img.width;
+			
 			context.drawImage(img, 0, 0);
 			
-			var imageData = context.getImageData(0,0,400,400);
+			var imageData = context.getImageData(0, 0, img.width, img.height);
 			var pixelArray = imageData.data;
-			var outputData = context.createImageData(400,400);
+			var outputData = context.createImageData(img.width, img.height);
 			var outputPixelArray = outputData.data;
 		
-			//console.debug(pixelArray);
-			
 			/*for (var i = 0; i < 200; i++) {
 				var text = "R: " + pixelArray[i] + " G: " + pixelArray[i+1] +
 					" B: " + pixelArray[i+2] + " A: " + pixelArray[i+3];
@@ -50,7 +62,7 @@ window.onload = function() {
 			
 			
 			
-			for (var i = 0; i < pixelArray.length; i++) {
+			for (var i = 0; i < pixelArray.length; i += 4) {
 				var avg = (pixelArray[i] + pixelArray[i+1] + pixelArray[i+2]) / 3;
 				outputPixelArray[i] = avg;
 				outputPixelArray[i+1] = avg;
@@ -59,10 +71,9 @@ window.onload = function() {
 				// write transparency
 				outputPixelArray[i+3] = 255;
 				
-				i += 3;
 			}
 			
-			context.putImageData(outputData,0,0);
+			contextOutput.putImageData(outputData,0,0);
 		};
 		
 		
