@@ -60,11 +60,11 @@ function logPixelArray(pixelArray) {
 
 /***** 8 * 8 DCT ********/
 
-function dctBasicFunction(l, k, n, m) {
+function dctBasisFunction(l, k, n, m) {
 	return Math.cos( ((2*m + l) * k * Math.PI) / 16) * Math.cos( ((2*n + l) * l * Math.PI) / 16);	
 }
 
-function getDctBlocks(pixelArray, width, height) {
+function getBlocks(pixelArray, width, height) {
 	// ignore border, e.g. only multiplies of eight
 	var width8 = width - (width % 8);
 	var height8 = height - (height % 8);
@@ -90,6 +90,31 @@ function getDctBlocks(pixelArray, width, height) {
 	}	 
 	
 	return dctBlocks;	
+}
+
+function normFactor(ci) {
+	if (ci == 0) {
+		return (Math.sqrt(2) / 2);
+	}
+	return 1 / 2;
+}
+
+function getDctCoefficientBlock(pixelBlock) {
+	var coefficientBlock = new Array(64);
+	for (var l = 0; l < 8; l++) {
+		for (var k = 0; k < 8; k++) {
+			
+			coefficientBlock[l * 8 + k] = 0;
+			
+			for (var n = 0; n < 8; n++) {
+				for (var m = 0; m < 8; m++) {
+					coefficientBlock[l * 8 + k] += (1/64) * pixelBlock[n * 8 + m] * dctBasisFunction(l, k, n, m);
+				}
+			}
+		}
+	}
+	
+	return coefficientBlock;
 }
 
 window.onload = function() {
@@ -147,7 +172,9 @@ window.onload = function() {
 			getGreyscaleImg(pixelArray, outputPixelArray);
 			
 			
-			var dctBlocks = getDctBlocks(getGreyscaleArray(pixelArray), img.width, img.height));
+			var blocks = getBlocks(getGreyscaleArray(pixelArray), img.width, img.height);
+			
+			console.debug(getDctCoefficientBlock(blocks[0]));
 			
 			// write data to canvas
 			contextOutput.putImageData(outputData,0,0);
