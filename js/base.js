@@ -1,3 +1,15 @@
+function getGreyscaleImg(inputPixelArray, outputPixelArray) {
+	for (var i = 0; i < inputPixelArray.length; i +=4) {
+		var avg = (inputPixelArray[i] + inputPixelArray[i+1] + inputPixelArray[i+2]) / 3;
+		outputPixelArray[i] = avg;
+		outputPixelArray[i+1] = avg;
+		outputPixelArray[i+2] = avg;
+		
+		// write transparency
+		outputPixelArray[i+3] = inputPixelArray[i+3];
+	}
+}
+
 window.onload = function() {
 
 	var control = document.getElementById("files");
@@ -19,7 +31,7 @@ window.onload = function() {
 		var dataURI = event.target.result;
 		
 		var canvasInput = document.getElementById("canvas-input");
-		var context = canvasInput.getContext("2d");
+		var contextInput = canvasInput.getContext("2d");
 		
 		var canvasCoefficient = document.getElementById("canvas-coefficient");
 		var contextCoefficient = canvasCoefficient.getContext("2d");
@@ -46,12 +58,13 @@ window.onload = function() {
 			canvasOutput.height = img.height;
 			canvasOutput.width = img.width;
 			
-			context.drawImage(img, 0, 0);
+			contextInput.drawImage(img, 0, 0);
 			
-			var imageData = context.getImageData(0, 0, img.width, img.height);
+			var imageData = contextInput.getImageData(0, 0, img.width, img.height);
 			var pixelArray = imageData.data;
-			var outputData = context.createImageData(img.width, img.height);
+			var outputData = contextInput.createImageData(img.width, img.height);
 			var outputPixelArray = outputData.data;
+			//var outputPixelArray = [];
 		
 			/*for (var i = 0; i < 200; i++) {
 				var text = "R: " + pixelArray[i] + " G: " + pixelArray[i+1] +
@@ -61,17 +74,7 @@ window.onload = function() {
 			}*/
 			
 			
-			
-			for (var i = 0; i < pixelArray.length; i += 4) {
-				var avg = (pixelArray[i] + pixelArray[i+1] + pixelArray[i+2]) / 3;
-				outputPixelArray[i] = avg;
-				outputPixelArray[i+1] = avg;
-				outputPixelArray[i+2] = avg;
-				
-				// write transparency
-				outputPixelArray[i+3] = 255;
-				
-			}
+			outputPixelArray = getGreyscaleImg(pixelArray, outputPixelArray);
 			
 			contextOutput.putImageData(outputData,0,0);
 		};
