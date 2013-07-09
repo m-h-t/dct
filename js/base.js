@@ -34,11 +34,21 @@ function getEntropy(pixelArray) {
 		}
 	}
 	
-	return -entropy;
+	return Math.round(-entropy * 1000) / 1000;
+}
+
+function logPixelArray(pixelArray) {
+	for (var i = 0; i < 200; i++) {
+		var text = "R: " + pixelArray[i] + " G: " + pixelArray[i+1] +
+			" B: " + pixelArray[i+2] + " A: " + pixelArray[i+3];
+			i += 3;
+		console.log(text);
+	}
 }
 
 window.onload = function() {
 
+	// read files
 	var control = document.getElementById("files");
 	control.addEventListener("change", function(event) {
 		var i = 0,
@@ -69,11 +79,6 @@ window.onload = function() {
 		var img = new Image();
 		img.src = dataURI;
 		
-		//context.clearRect(0,0, 400, 400);
-		
-		//canvas.height = img.height;
-		//canvas.width = img.width;
-		
 		// wait till image is loaded
 		img.onload = function() {
 			canvasInput.height = img.height;
@@ -91,22 +96,12 @@ window.onload = function() {
 			var pixelArray = imageData.data;
 			var outputData = contextInput.createImageData(img.width, img.height);
 			var outputPixelArray = outputData.data;
-			//var outputPixelArray = [];
 		
-			/*for (var i = 0; i < 200; i++) {
-				var text = "R: " + pixelArray[i] + " G: " + pixelArray[i+1] +
-					" B: " + pixelArray[i+2] + " A: " + pixelArray[i+3];
-					i += 3;
-				console.log(text);
-			}*/
-			
-			
-			//outputPixelArray = getGreyscaleImg(pixelArray, outputPixelArray);
 			getGreyscaleImg(pixelArray, outputPixelArray);
 			
 			contextOutput.putImageData(outputData,0,0);
 			
-			
+			// print entropy
 			document.getElementById("entropy-output").innerHTML = getEntropy(outputPixelArray);
 		};
 		
