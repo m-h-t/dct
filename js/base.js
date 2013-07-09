@@ -10,6 +10,17 @@ function getGreyscaleImg(inputPixelArray, outputPixelArray) {
 	}
 }
 
+function getGreyscaleArray(inputPixelArray) {
+	var resultPixels = new Uint8ClampedArray(inputPixelArray.length / 4);
+	
+	for (var i = 0; i < resultPixels.length; i++) {
+		var avg = (inputPixelArray[(4 * i)] + inputPixelArray[(4 * i) + 1] + inputPixelArray[(4 * i) + 2]) / 3;
+		resultPixels[i] = avg;
+	}
+	
+	return resultPixels;
+}
+
 function getEntropy(pixelArray) {
 	var entropy = 0;
 	var frequencies = new Float32Array(265);
@@ -81,6 +92,7 @@ window.onload = function() {
 		
 		// wait till image is loaded
 		img.onload = function() {
+			// set canvas widths & heights
 			canvasInput.height = img.height;
 			canvasInput.width = img.width;
 			
@@ -97,11 +109,19 @@ window.onload = function() {
 			var outputData = contextInput.createImageData(img.width, img.height);
 			var outputPixelArray = outputData.data;
 		
+			
+			
+			
 			getGreyscaleImg(pixelArray, outputPixelArray);
 			
+			console.debug(outputPixelArray);
+			console.debug(getGreyscaleArray(pixelArray));
+			
+			// write data to canvas
 			contextOutput.putImageData(outputData,0,0);
 			
 			// print entropy
+			document.getElementById("entropy-input").innerHTML = getEntropy(pixelArray) + " (red channel)";
 			document.getElementById("entropy-output").innerHTML = getEntropy(outputPixelArray);
 		};
 		
