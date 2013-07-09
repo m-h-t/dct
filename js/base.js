@@ -65,26 +65,11 @@ function dctBasicFunction(l, k, n, m) {
 }
 
 function getDctBlocks(pixelArray, width, height) {
-	// ignore border, e.g. no multiplies of eight
+	// ignore border, e.g. only multiplies of eight
 	var width8 = width - (width % 8);
 	var height8 = height - (height % 8);
 	
 	var dctBlocks = new Array(width8 * height8);
-	
-	/*var blockNo = 0;
-	
-	for (var y = 0; y < height; y += 8) {
-		for (var x = 0; x < width; x += 8) {
-			// fill up block
-			for (var yBlock = y; yBlock < y + 8; yBlock++) {
-				for (var xBlock = x; xBlock < y + 8; xBlock++) {
-					dctBlocks[blockNo] = new Array();
-					dctBlocks[blockNo][((yBlock - y) * 8) + (xBlock - x)] = pixelArray[yBlock * width + xBlock];
-				}
-			}
-			blockNo++;
-		}
-	}*/
 	
 	// loop over all blocks
 	for (var y = 0; y < (height8 / 8); y++) {
@@ -103,17 +88,6 @@ function getDctBlocks(pixelArray, width, height) {
 			}
 		}
 	}	 
-		
-		
-		// loop over block
-		/*for (var j = 0; j < 8; j++) {
-			for (var k = 0; k < 8; k++) {
-				var pos = i * 8
-		
-				dctBlocks[i][j] = pixelArray[ i * 8 
-			}
-		}*/
-	
 	
 	return dctBlocks;	
 }
@@ -172,10 +146,6 @@ window.onload = function() {
 			
 			getGreyscaleImg(pixelArray, outputPixelArray);
 			
-//			console.debug(outputPixelArray);
-//			console.debug(getGreyscaleArray(pixelArray));
-			
-			//console.debug(getDctBlocks(getGreyscaleArray(pixelArray), img.width, img.height));
 			
 			var dctBlocks = getDctBlocks(getGreyscaleArray(pixelArray), img.width, img.height));
 			
