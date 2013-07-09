@@ -10,6 +10,33 @@ function getGreyscaleImg(inputPixelArray, outputPixelArray) {
 	}
 }
 
+function getEntropy(pixelArray) {
+	var entropy = 0;
+	var frequencies = new Float32Array(265);
+	
+	// histogram
+	for (var i = 0; i < pixelArray.length; i += 4) {
+		frequencies[pixelArray[i]]++;
+	}
+	
+	var sum = 0;
+	for (var i = 0; i < frequencies.length; i++) {
+		sum += frequencies[i];
+	}
+	
+	for (var i = 0; i < frequencies.length; i++) {
+		frequencies[i] /= sum;
+	}
+	
+	for (var i = 0; i < frequencies.length; i++) {
+		if (frequencies[i] > 0) {
+			entropy += frequencies[i] * (Math.log(frequencies[i]) / Math.log(2));
+		}
+	}
+	
+	return -entropy;
+}
+
 window.onload = function() {
 
 	var control = document.getElementById("files");
@@ -74,9 +101,13 @@ window.onload = function() {
 			}*/
 			
 			
-			outputPixelArray = getGreyscaleImg(pixelArray, outputPixelArray);
+			//outputPixelArray = getGreyscaleImg(pixelArray, outputPixelArray);
+			getGreyscaleImg(pixelArray, outputPixelArray);
 			
 			contextOutput.putImageData(outputData,0,0);
+			
+			
+			document.getElementById("entropy-output").innerHTML = getEntropy(outputPixelArray);
 		};
 		
 		
