@@ -64,6 +64,60 @@ function dctBasicFunction(l, k, n, m) {
 	return Math.cos( ((2*m + l) * k * Math.PI) / 16) * Math.cos( ((2*n + l) * l * Math.PI) / 16);	
 }
 
+function getDctBlocks(pixelArray, width, height) {
+	// ignore border, e.g. no multiplies of eight
+	var width8 = width - (width % 8);
+	var height8 = height - (height % 8);
+	
+	var dctBlocks = new Array(width8 * height8);
+	
+	/*var blockNo = 0;
+	
+	for (var y = 0; y < height; y += 8) {
+		for (var x = 0; x < width; x += 8) {
+			// fill up block
+			for (var yBlock = y; yBlock < y + 8; yBlock++) {
+				for (var xBlock = x; xBlock < y + 8; xBlock++) {
+					dctBlocks[blockNo] = new Array();
+					dctBlocks[blockNo][((yBlock - y) * 8) + (xBlock - x)] = pixelArray[yBlock * width + xBlock];
+				}
+			}
+			blockNo++;
+		}
+	}*/
+	
+	// loop over all blocks
+	for (var y = 0; y < (height8 / 8); y++) {
+		for (var x = 0; x < (width8 / 8); x++) {
+			var blockNo = y * height8 + x;
+			
+			dctBlocks[blockNo] = new Array(64);
+			
+			// loop over single bock
+			for (var i = 0; i < 8; i++) {
+				for (var j = 0; j < 8; j++) {
+					// pixPos = block position + position inside of the block
+					var pixPos = (y * 8 * width8) + (i * width8) + (x * 8) + j; 
+					dctBlocks[blockNo][i * 8 + j] = pixelArray[pixPos];
+				}
+			}
+		}
+	}	 
+		
+		
+		// loop over block
+		/*for (var j = 0; j < 8; j++) {
+			for (var k = 0; k < 8; k++) {
+				var pos = i * 8
+		
+				dctBlocks[i][j] = pixelArray[ i * 8 
+			}
+		}*/
+	
+	
+	return dctBlocks;	
+}
+
 window.onload = function() {
 
 	// read files
@@ -118,8 +172,12 @@ window.onload = function() {
 			
 			getGreyscaleImg(pixelArray, outputPixelArray);
 			
-			console.debug(outputPixelArray);
-			console.debug(getGreyscaleArray(pixelArray));
+//			console.debug(outputPixelArray);
+//			console.debug(getGreyscaleArray(pixelArray));
+			
+			//console.debug(getDctBlocks(getGreyscaleArray(pixelArray), img.width, img.height));
+			
+			var dctBlocks = getDctBlocks(getGreyscaleArray(pixelArray), img.width, img.height));
 			
 			// write data to canvas
 			contextOutput.putImageData(outputData,0,0);
