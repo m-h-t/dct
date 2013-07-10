@@ -313,7 +313,7 @@ window.onload = function() {
 		var canvasOutput = document.getElementById("canvas-output");
 		var contextOutput = canvasOutput.getContext("2d");
 		
-		var dctBlockSizeLimit = 64;
+		var dctBlockSizeLimit = document.getElementById("dctblocksize-slider").value - 1;
 		
 		// wait till image is loaded
 		img.onload = function() {
