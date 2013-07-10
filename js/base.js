@@ -104,7 +104,7 @@ function getCroppedArray(pixelArray, orgWidth, orgHeight) {
 /********* 2D-DCT ********************/
 
 function dctBasisFunction(l, k, n, m) {
-	return Math.cos( ((2*m + l) * k * Math.PI) / 16) * Math.cos( ((2*n + l) * l * Math.PI) / 16);	
+	return Math.cos( ((2*m + 1) * k * Math.PI) / 16) * Math.cos( ((2*n + 1) * l * Math.PI) / 16);	
 }
 
 
@@ -116,7 +116,6 @@ function dctBasisFunction(l, k, n, m) {
  */
 function getBlocks(pixelArray, width, height) {
 
-	
 	var blocks = new Array((width / 8) * (height / 8));
 	
 	// loop over all blocks
@@ -149,7 +148,7 @@ function getBlocks(pixelArray, width, height) {
  */
 function getPixelArrayFromBlocks(blocks, width, height, offset) {
 	
-	var pixelArray = new Uint8ClampedArray(width * height);
+	var pixelArray = new Array(width * height);
 	
 	// loop over all blocks
 	for (var y = 0; y < (height / 8); y++) {
@@ -166,8 +165,6 @@ function getPixelArrayFromBlocks(blocks, width, height, offset) {
 					var pixPos = (y * 8 * width) + (i * width) + (x * 8) + j; 
 					
 					// OFFSET
-					//pixelArray[pixPos] = blocks[blockNo][i * 8 + j] / 8 + 128;
-					
 					if (offset) {
 						pixelArray[pixPos] = blocks[blockNo][i * 8 + j] / 8 + 128;
 					} else {
@@ -191,6 +188,9 @@ function normFactor(l, k) {
 	}
 }
 
+/**
+ * Get a single dct coefficient block
+ */
 function getDctCoefficientBlock(pixelBlock) {
 	var coefficientBlock = new Array(64);
 	
@@ -214,6 +214,9 @@ function getDctCoefficientBlock(pixelBlock) {
 	return coefficientBlock;
 }
 
+/**
+ * Transform dct block back into pixel block
+ */
 function getPixelBlock(coefficientBlock) {
 	var pixelBlock = new Array(64);
 
@@ -336,7 +339,7 @@ window.onload = function() {
 			
 			var greyscalePixelArray = getCroppedArray(getGreyValueArray(inputRgbaArray), img.width, img.height);
 			
-			
+			// process greyscale array
 			var resultArrays = processImage(greyscalePixelArray, width, height);
 			
 			// convert into rgba arrays
@@ -372,18 +375,6 @@ window.onload = function() {
 		
 	};
 	
-	
-	
-	
-	/*var reader = new FileReader();
-	reader.onload = function(event) {
-    		var dataUri = event.target.result,
-        	img = document.createElement("img");
-
-    		img.src = dataUri;
-		document.body.appendChild(img);
-	};*/
-
 	reader.onerror = function(event) {
 		console.error("File could not be read! Code " + event.target.error.code);
 	};
