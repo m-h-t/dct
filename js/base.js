@@ -51,13 +51,44 @@ function getRgbaArray(greyscaleArray, outputPixelArray) {
 /********* Entropy, MSE, Crop *************/
 
 function getHistogram(pixelArray) {
-	var frequencies = new Array();
-	
+	var frequencies = new Uint32Array(256);
+
 	for (var i = 0; i < pixelArray.length; i++) {
-		frequencies[pixelArray[i]]++;
+			frequencies[pixelArray[i]]++;
 	}
 	
 	return frequencies;
+}
+
+function getArithmeticAverage(histogram) {
+	var arithmeticAverage = 0;
+	var values = 0;
+	
+	for (var i = 0; i < histogram.length; i++) {
+		values += histogram[i];
+	}
+	
+	for (var i = 0; i < histogram.length; i++) {
+		if (histogram[i] != 0) {
+			arithmeticAverage += i * (histogram[i] / values);
+		}
+	}
+	
+	return  Math.round(arithmeticAverage * 100) / 100;
+}
+
+function getSquareStandardVariance() {
+	
+}
+
+function getErrorPattern(orgPixelArray, modPixelArray, offset) {
+	var errorPattern = new Array(Uint8ClampedArray);
+	
+	for (var i = 0; i < orgPixelArray.length; i++) {
+		errorPattern[i] = orgPixelArray - modPixelArray + offset;
+	}
+	
+	return errorPattern;
 }
 
 function getEntropy(pixelArray) {
@@ -158,7 +189,7 @@ function getBlocks(pixelArray, width, height) {
  */
 function getPixelArrayFromBlocks(blocks, width, height, offset) {
 	
-	var pixelArray = new Array(width * height);
+	var pixelArray = new Uint8ClampedArray(width * height);
 	
 	// loop over all blocks
 	for (var y = 0; y < (height / 8); y++) {
@@ -210,6 +241,7 @@ function getDctCoefficientBlock(pixelBlock, sizeLimit) {
 			// calculate coefficient, loop over pixelBlock
 			for (var n = 0; n < 8; n++) {
 				for (var m = 0; m < 8; m++) {
+					// TODO: implement zigzag scan instead of naive approach
 					if (l * 8 + k > sizeLimit) {
 						coefficientBlock[l * 8 + k] = 0;
 					} else {
@@ -349,8 +381,10 @@ window.onload = function() {
 			// clear input canvas
 			contextInput.clearRect(0, 0, width, height);
 			
-			
+			// get cropped, into greyscale converted image
 			var greyscalePixelArray = getCroppedArray(getGreyValueArray(inputRgbaArray), img.width, img.height);
+			
+			console.debug(getHistogram(greyscalePixelArray));
 			
 			// process greyscale array
 			var resultArrays = processImage(greyscalePixelArray, width, height, dctBlockSizeLimit);
@@ -377,11 +411,20 @@ window.onload = function() {
 				window.location.href = saveImg;
 			}
 				
+			/************ stats *********/
+			var histogramInput = getHistogram(resultArrays[0]);
+			var histogramCoefficient = getHistogram(resultArrays[1]);
+			var histogramOutput = getHistogram(resultArrays[2]);
 			
 			// print entropy
 			document.getElementById("entropy-input").innerHTML = getEntropy(inputRgbaArray);
 			document.getElementById("entropy-coefficient").innerHTML = getEntropy(coefficientRgbaArray);
 			document.getElementById("entropy-output").innerHTML = getEntropy(outputRgbaArray);
+			
+			// print avg pixel value
+			document.getElementById("avg-input").innerHTML = getArithmeticAverage(histogramInput);
+			document.getElementById("avg-coefficient").innerHTML = getArithmeticAverage(histogramCoefficient);
+			document.getElementById("avg-output").innerHTML = getArithmeticAverage(histogramOutput);
 			
 		};
 		
