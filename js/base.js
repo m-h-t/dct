@@ -50,7 +50,15 @@ function getRgbaArray(greyscaleArray, outputPixelArray) {
 
 /********* Entropy, MSE, Crop *************/
 
-
+function getHistogram(pixelArray) {
+	var frequencies = new Array();
+	
+	for (var i = 0; i < pixelArray.length; i++) {
+		frequencies[pixelArray[i]]++;
+	}
+	
+	return frequencies;
+}
 
 function getEntropy(pixelArray) {
 	var entropy = 0;
@@ -76,7 +84,7 @@ function getEntropy(pixelArray) {
 		}
 	}
 	
-	return Math.round(-entropy * 1000) / 1000;
+	return Math.round(-entropy * 100000) / 100000;
 }
 
 function logPixelArray(pixelArray) {
@@ -156,9 +164,6 @@ function getPixelArrayFromBlocks(blocks, width, height, offset) {
 	for (var y = 0; y < (height / 8); y++) {
 		for (var x = 0; x < (width / 8); x++) {
 			var blockNo = y * (width / 8) + x;
-			//var blockNo = y + x;
-			
-			//dctBlocks[blockNo] = new Array(64);
 			
 			// loop over single bock
 			for (var i = 0; i < 8; i++) {
@@ -193,7 +198,7 @@ function normFactor(l, k) {
 /**
  * Get a single dct coefficient block
  */
-function getDctCoefficientBlock(pixelBlock) {
+function getDctCoefficientBlock(pixelBlock, sizeLimit) {
 	var coefficientBlock = new Array(64);
 	
 	// loop over coefficient block
@@ -202,10 +207,14 @@ function getDctCoefficientBlock(pixelBlock) {
 			
 			coefficientBlock[l * 8 + k] = 0;
 			
-			// calculate coefficient, loop over pixelBlock, TODO: loop wrong way? first m then n and l then k? 
+			// calculate coefficient, loop over pixelBlock
 			for (var n = 0; n < 8; n++) {
 				for (var m = 0; m < 8; m++) {
-					coefficientBlock[l * 8 + k] += pixelBlock[n * 8 + m] * dctBasisFunction(l, k, n, m);
+					if (l * 8 + k > sizeLimit) {
+						coefficientBlock[l * 8 + k] = 0;
+					} else {
+						coefficientBlock[l * 8 + k] += pixelBlock[n * 8 + m] * dctBasisFunction(l, k, n, m);
+					}
 				}
 			}
 			
@@ -240,9 +249,9 @@ function getPixelBlock(coefficientBlock) {
 }
 
 
-/********* App *****************/
+/********* Process *****************/
 
-function processImage(greyscaleArray, width, height) {
+function processImage(greyscaleArray, width, height, dctBlockSizeLimit) {
 	
 	// split image into 8 x 8 blocks
 	var blocks = getBlocks(greyscaleArray, width, height);
@@ -250,7 +259,7 @@ function processImage(greyscaleArray, width, height) {
 	// calculate coefficient block for each block
 	var coefficientBlocks = new Array();
 	for (var i = 0; i < blocks.length; i++) {
-		coefficientBlocks[i] = getDctCoefficientBlock(blocks[i]);
+		coefficientBlocks[i] = getDctCoefficientBlock(blocks[i], dctBlockSizeLimit);
 	}
 	
 	// join coefficient blocks together again and add offset
@@ -268,7 +277,7 @@ function processImage(greyscaleArray, width, height) {
 	return [greyscaleArray, coefficientPixelArray, reconvertedPixelArray];
 }
 
-
+/************ App ******************/
 
 window.onload = function() {
 
@@ -303,6 +312,8 @@ window.onload = function() {
 		
 		var canvasOutput = document.getElementById("canvas-output");
 		var contextOutput = canvasOutput.getContext("2d");
+		
+		var dctBlockSizeLimit = 64;
 		
 		// wait till image is loaded
 		img.onload = function() {
@@ -342,7 +353,7 @@ window.onload = function() {
 			var greyscalePixelArray = getCroppedArray(getGreyValueArray(inputRgbaArray), img.width, img.height);
 			
 			// process greyscale array
-			var resultArrays = processImage(greyscalePixelArray, width, height);
+			var resultArrays = processImage(greyscalePixelArray, width, height, dctBlockSizeLimit);
 			
 			// convert into rgba arrays
 			getRgbaArray(resultArrays[0], inputRgbaArray);
@@ -374,7 +385,16 @@ window.onload = function() {
 			
 		};
 		
+		// set up slider for dctblocksize
+		document.getElementById("dctblocksize-slider").onchange = function() {
+			document.getElementById("slider-value").innerHTML = (this).value;
+		}
 		
+		document.getElementById("dctblocksize-slider").onmouseup = function() {
+			// - 1 because first block starts at index 0
+			dctBlockSizeLimit = (this).value - 1;
+			img.onload();
+		}
 	};
 	
 	reader.onerror = function(event) {
