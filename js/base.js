@@ -120,7 +120,7 @@ function getBlocks(pixelArray, width, height) {
 	
 	return blocks;	
 }
-
+// GET DCT PIXEL ARRAY
 function getPixelArrayFromBlocks(blocks, width, height) {
 	var pixelArray = new Uint32Array(width * height);
 	
@@ -141,7 +141,7 @@ function getPixelArrayFromBlocks(blocks, width, height) {
 					var pixPos = (y * 8 * width8) + (i * width8) + (x * 8) + j; 
 					
 					// OFFSET
-					pixelArray[pixPos] = blocks[blockNo][i * 8 + j] + 128;
+					pixelArray[pixPos] = blocks[blockNo][i * 8 + j] / 8 + 128;
 				}
 			}
 		}
@@ -150,27 +150,33 @@ function getPixelArrayFromBlocks(blocks, width, height) {
 	return pixelArray;	
 }
 
-function normFactor(ci) {
-	if (ci == 0) {
-		return (Math.sqrt(2) / 2);
+function normFactor(l, k) {
+	if (l == 0 && k == 0) {
+		return (Math.sqrt(1 / 8) * Math.sqrt(1 / 8));
+	} else if (l == 0 || k == 0) {
+		return (Math.sqrt(1 / 8) * 0.5);
+	} else {
+		return 0.25;
 	}
-	return 1 / 2;
 }
 
 function getDctCoefficientBlock(pixelBlock) {
 	var coefficientBlock = new Array(64);
+	
+	// loop over coefficient block
 	for (var l = 0; l < 8; l++) {
 		for (var k = 0; k < 8; k++) {
 			
 			coefficientBlock[l * 8 + k] = 0;
 			
+			// calculate coefficient, loop over pixelBlock
 			for (var n = 0; n < 8; n++) {
 				for (var m = 0; m < 8; m++) {
-					var dctBasis = dctBasisFunction(l, k, n, m);
-				
-					coefficientBlock[l * 8 + k] += (1/64) * pixelBlock[n * 8 + m] * dctBasis;
+					coefficientBlock[l * 8 + k] += pixelBlock[n * 8 + m] * dctBasisFunction(l, k, n, m);
 				}
 			}
+			
+			coefficientBlock[l * 8 + k] *= normFactor(l, k);
 		}
 	}
 	
@@ -253,19 +259,27 @@ window.onload = function() {
 			for (var i = 0; i < blocks.length; i++) {
 				coefficientBlocks[i] = getDctCoefficientBlock(blocks[i]);
 			}
+
+			console.debug(coefficientBlocks);
 			
 			var coefficientValues = getPixelArrayFromBlocks(coefficientBlocks, img.width, img.height);
-
+			
+			console.debug(coefficientValues);
 			
 			 getRgbaArray(coefficientValues, coefficientRgbaArray);
 			
 			// write data to canvas
-			contextOutput.putImageData(outputData,0,0);
+			contextInput.putImageData(outputData, 0, 0);
+			
 			contextCoefficient.putImageData(coefficientData, 0, 0);
-
+			
+			// TODO actually calculate output data
+			contextOutput.putImageData(outputData, 0, 0);
+			
+			
 			
 			// print entropy
-			document.getElementById("entropy-input").innerHTML = getEntropy(inputRgbaArray) + " (red channel)";
+			document.getElementById("entropy-input").innerHTML = getEntropy(outputRgbaArray);
 			document.getElementById("entropy-output").innerHTML = getEntropy(outputRgbaArray);
 			document.getElementById("entropy-coefficient").innerHTML = getEntropy(coefficientRgbaArray);
 		};
