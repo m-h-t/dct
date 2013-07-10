@@ -50,9 +50,11 @@ function getRgbaArray(greyscaleArray, outputPixelArray) {
 
 /********* Entropy, MSE, Crop *************/
 
+
+
 function getEntropy(pixelArray) {
 	var entropy = 0;
-	var frequencies = new Float32Array(265);
+	var frequencies = new Float32Array(256);
 	
 	// histogram
 	for (var i = 0; i < pixelArray.length; i += 4) {
