@@ -48,7 +48,7 @@ function getRgbaArray(greyscaleArray, outputPixelArray) {
 	}
 }
 
-/********* Entropy, MSE *************/
+/********* Entropy, MSE, Crop *************/
 
 function getEntropy(pixelArray) {
 	var entropy = 0;
@@ -86,6 +86,20 @@ function logPixelArray(pixelArray) {
 	}
 }
 
+function getCroppedArray(pixelArray, orgWidth, orgHeight) {
+	var width = orgWidth - (orgWidth % 8);
+	var height = orgHeight - (orgHeight % 8);
+		
+	var croppedImage = new Uint8ClampedArray(width * height);
+	
+	for (var y = 0; y < height; y++) {
+		for (var x = 0; x < width; x++) {
+			croppedImage[y * width + x] = pixelArray[y * width + x];
+		}
+	}
+	
+	return croppedImage;
+}
 
 /********* 2D-DCT ********************/
 
@@ -93,17 +107,22 @@ function dctBasisFunction(l, k, n, m) {
 	return Math.cos( ((2*m + l) * k * Math.PI) / 16) * Math.cos( ((2*n + l) * l * Math.PI) / 16);	
 }
 
+
+/**
+ * Split the array into blocks of 8 x 8 pixels
+ * @param {number} width - Image width, must be a multiple of 8
+ * @param {number} height - Image height, must be a multiple of 8
+ * @return {array} - Array containing the blocks, each one itself an array
+ */
 function getBlocks(pixelArray, width, height) {
-	// ignore border, e.g. only multiplies of eight
-	var width8 = width - (width % 8);
-	var height8 = height - (height % 8);
+
 	
-	var blocks = new Array((width8 / 8) * (height8 / 8));
+	var blocks = new Array((width / 8) * (height / 8));
 	
 	// loop over all blocks
-	for (var y = 0; y < (height8 / 8); y++) {
-		for (var x = 0; x < (width8 / 8); x++) {
-			var blockNo = y * (width8 / 8) + x;
+	for (var y = 0; y < (height / 8); y++) {
+		for (var x = 0; x < (width / 8); x++) {
+			var blockNo = y * (width / 8) + x;
 			
 			blocks[blockNo] = new Array(64);
 			
@@ -111,7 +130,7 @@ function getBlocks(pixelArray, width, height) {
 			for (var i = 0; i < 8; i++) {
 				for (var j = 0; j < 8; j++) {
 					// pixPos = block position + position inside of the block
-					var pixPos = (y * 8 * width8) + (i * width8) + (x * 8) + j; 
+					var pixPos = (y * 8 * width) + (i * width) + (x * 8) + j; 
 					blocks[blockNo][i * 8 + j] = pixelArray[pixPos];
 				}
 			}
@@ -120,19 +139,22 @@ function getBlocks(pixelArray, width, height) {
 	
 	return blocks;	
 }
-// GET DCT PIXEL ARRAY
+
+/**
+ * Join the blocks together into one single array
+ * @param {array} blocks - Array of blocks, each containing 8x8 pixels
+ * @param {number} width - Width of the image, must be multiple of 8
+ * @param {number} height - Height of the image, must be multiple of 8
+ * @param {boolean} offset - Whether an offset is added or not
+ */
 function getPixelArrayFromBlocks(blocks, width, height, offset) {
 	
-	
-	var width8 = width - (width % 8);
-	var height8 = height - (height % 8);
-	
-	var pixelArray = new Uint8ClampedArray(width8 * height8);
+	var pixelArray = new Uint8ClampedArray(width * height);
 	
 	// loop over all blocks
-	for (var y = 0; y < (height8 / 8); y++) {
-		for (var x = 0; x < (width8 / 8); x++) {
-			var blockNo = y * (width8 / 8) + x;
+	for (var y = 0; y < (height / 8); y++) {
+		for (var x = 0; x < (width / 8); x++) {
+			var blockNo = y * (width / 8) + x;
 			//var blockNo = y + x;
 			
 			//dctBlocks[blockNo] = new Array(64);
@@ -141,7 +163,7 @@ function getPixelArrayFromBlocks(blocks, width, height, offset) {
 			for (var i = 0; i < 8; i++) {
 				for (var j = 0; j < 8; j++) {
 					// pixPos = block position + position inside of the block
-					var pixPos = (y * 8 * width8) + (i * width8) + (x * 8) + j; 
+					var pixPos = (y * 8 * width) + (i * width) + (x * 8) + j; 
 					
 					// OFFSET
 					//pixelArray[pixPos] = blocks[blockNo][i * 8 + j] / 8 + 128;
@@ -215,6 +237,34 @@ function getPixelBlock(coefficientBlock) {
 
 /********* App *****************/
 
+function processImage(greyscaleArray, width, height) {
+	
+	// split image into 8 x 8 blocks
+	var blocks = getBlocks(greyscaleArray, width, height);
+	
+	// calculate coefficient block for each block
+	var coefficientBlocks = new Array();
+	for (var i = 0; i < blocks.length; i++) {
+		coefficientBlocks[i] = getDctCoefficientBlock(blocks[i]);
+	}
+	
+	// join coefficient blocks together again and add offset
+	var coefficientPixelArray = getPixelArrayFromBlocks(coefficientBlocks, width, height, true);
+			
+	// calculate pixel blocks from coefficient block
+	var pixelBlocks = new Array();
+	for (var i = 0; i < coefficientBlocks.length; i++) {
+		pixelBlocks[i] = getPixelBlock(coefficientBlocks[i]);
+	}
+	
+	// join reconverted pixel blocks together again
+	var reconvertedPixelArray = getPixelArrayFromBlocks(pixelBlocks, width, height, false);
+	
+	return [greyscaleArray, coefficientPixelArray, reconvertedPixelArray];
+}
+
+
+
 window.onload = function() {
 
 	// read files
@@ -251,6 +301,12 @@ window.onload = function() {
 		
 		// wait till image is loaded
 		img.onload = function() {
+			
+			// get cropped width & heights: multiples of 8
+			var width = img.width - (img.width % 8);
+			var height = img.height - (img.height % 8);
+			
+			
 			// set canvas widths & heights according to image width & height
 			canvasInput.height = img.height;
 			canvasInput.width = img.width;
@@ -264,56 +320,34 @@ window.onload = function() {
 			contextInput.drawImage(img, 0, 0);
 			
 			// get raw image data
-			var inputData = contextInput.getImageData(0, 0, img.width, img.height);
+			var inputData = contextInput.getImageData(0, 0, width, height);
 			var inputRgbaArray = inputData.data;
 			
 			// create image data objects for coefficient canvas and output canvas
-			var coefficientData = contextInput.createImageData(img.width, img.height);
+			var coefficientData = contextInput.createImageData(width, height);
 			var coefficientRgbaArray = coefficientData.data;
 			
-			var outputData = contextInput.createImageData(img.width, img.height);
+			var outputData = contextInput.createImageData(width, height);
 			var outputRgbaArray = outputData.data;
 			
-			
-			rgbaColorToRgbaGreyscaleArray(inputRgbaArray, inputRgbaArray);
-			
-			
-			var greyscaleValueArray = getGreyValueArray(inputRgbaArray);
-			
-			// split image into 8 x 8 blocks
-			var blocks = getBlocks(greyscaleValueArray, img.width, img.height);
-			
-			// calculate coefficient block for each block
-			var coefficientBlocks = new Array();
-			for (var i = 0; i < blocks.length; i++) {
-				coefficientBlocks[i] = getDctCoefficientBlock(blocks[i]);
-			}
-
-			console.debug(coefficientBlocks);
-			
-			var coefficientValues = getPixelArrayFromBlocks(coefficientBlocks, img.width, img.height, true);
-			
-			// calculate pixel blocks from coefficient block
-			var pixelBlocks = new Array();
-			for (var i = 0; i < coefficientBlocks.length; i++) {
-				pixelBlocks[i] = getPixelBlock(coefficientBlocks[i]);
-			}
-			
-			var convertedImage = getPixelArrayFromBlocks(pixelBlocks, img.width, img.height, false);
-			getRgbaArray(convertedImage, outputRgbaArray);
+			// clear input canvas
+			contextInput.clearRect(0, 0, width, height);
 			
 			
+			var greyscalePixelArray = getCroppedArray(getGreyValueArray(inputRgbaArray), img.width, img.height);
 			
-			console.debug(coefficientValues);
 			
-			 getRgbaArray(coefficientValues, coefficientRgbaArray);
+			var resultArrays = processImage(greyscalePixelArray, width, height);
+			
+			// convert into rgba arrays
+			getRgbaArray(resultArrays[0], inputRgbaArray);
+			getRgbaArray(resultArrays[1], coefficientRgbaArray);
+			getRgbaArray(resultArrays[2], outputRgbaArray);
+			
 			
 			// write data to canvas
 			contextInput.putImageData(inputData, 0, 0);
-			
 			contextCoefficient.putImageData(coefficientData, 0, 0);
-			
-			// TODO actually calculate output data
 			contextOutput.putImageData(outputData, 0, 0);
 			
 			// save image buttons
