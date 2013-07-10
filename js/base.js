@@ -121,16 +121,19 @@ function getBlocks(pixelArray, width, height) {
 	return blocks;	
 }
 // GET DCT PIXEL ARRAY
-function getPixelArrayFromBlocks(blocks, width, height) {
-	var pixelArray = new Uint32Array(width * height);
+function getPixelArrayFromBlocks(blocks, width, height, offset) {
+	
 	
 	var width8 = width - (width % 8);
 	var height8 = height - (height % 8);
+	
+	var pixelArray = new Uint8ClampedArray(width8 * height8);
 	
 	// loop over all blocks
 	for (var y = 0; y < (height8 / 8); y++) {
 		for (var x = 0; x < (width8 / 8); x++) {
 			var blockNo = y * (width8 / 8) + x;
+			//var blockNo = y + x;
 			
 			//dctBlocks[blockNo] = new Array(64);
 			
@@ -141,7 +144,13 @@ function getPixelArrayFromBlocks(blocks, width, height) {
 					var pixPos = (y * 8 * width8) + (i * width8) + (x * 8) + j; 
 					
 					// OFFSET
-					pixelArray[pixPos] = blocks[blockNo][i * 8 + j] / 8 + 128;
+					//pixelArray[pixPos] = blocks[blockNo][i * 8 + j] / 8 + 128;
+					
+					if (offset) {
+						pixelArray[pixPos] = blocks[blockNo][i * 8 + j] / 8 + 128;
+					} else {
+						pixelArray[pixPos] = blocks[blockNo][i * 8 + j];
+					}
 				}
 			}
 		}
@@ -169,7 +178,7 @@ function getDctCoefficientBlock(pixelBlock) {
 			
 			coefficientBlock[l * 8 + k] = 0;
 			
-			// calculate coefficient, loop over pixelBlock
+			// calculate coefficient, loop over pixelBlock, TODO: loop wrong way? first m then n and l then k? 
 			for (var n = 0; n < 8; n++) {
 				for (var m = 0; m < 8; m++) {
 					coefficientBlock[l * 8 + k] += pixelBlock[n * 8 + m] * dctBasisFunction(l, k, n, m);
@@ -181,6 +190,26 @@ function getDctCoefficientBlock(pixelBlock) {
 	}
 	
 	return coefficientBlock;
+}
+
+function getPixelBlock(coefficientBlock) {
+	var pixelBlock = new Array(64);
+
+	// loop over pixelBlock
+	for (var n = 0; n < 8; n++) {
+		for (var m = 0; m < 8; m++) {
+			pixelBlock[n * 8 + m] = 0;
+			
+			// loop over coefficient block, calculate pixel value
+			for (var l = 0; l < 8; l++) {
+				for (var k = 0; k < 8; k++) {
+					pixelBlock[n * 8 + m] += normFactor(l, k) * coefficientBlock[l * 8 + k] * dctBasisFunction(l, k, n, m);
+				}
+			}
+		}
+	}
+	
+	return pixelBlock;
 }
 
 
@@ -246,10 +275,10 @@ window.onload = function() {
 			var outputRgbaArray = outputData.data;
 			
 			
-			rgbaColorToRgbaGreyscaleArray(inputRgbaArray, outputRgbaArray);
+			rgbaColorToRgbaGreyscaleArray(inputRgbaArray, inputRgbaArray);
 			
 			
-			var greyscaleValueArray = getGreyValueArray(outputRgbaArray);
+			var greyscaleValueArray = getGreyValueArray(inputRgbaArray);
 			
 			// split image into 8 x 8 blocks
 			var blocks = getBlocks(greyscaleValueArray, img.width, img.height);
@@ -262,30 +291,55 @@ window.onload = function() {
 
 			console.debug(coefficientBlocks);
 			
-			var coefficientValues = getPixelArrayFromBlocks(coefficientBlocks, img.width, img.height);
+			var coefficientValues = getPixelArrayFromBlocks(coefficientBlocks, img.width, img.height, true);
+			
+			// calculate pixel blocks from coefficient block
+			var pixelBlocks = new Array();
+			for (var i = 0; i < coefficientBlocks.length; i++) {
+				pixelBlocks[i] = getPixelBlock(coefficientBlocks[i]);
+			}
+			
+			var convertedImage = getPixelArrayFromBlocks(pixelBlocks, img.width, img.height, false);
+			getRgbaArray(convertedImage, outputRgbaArray);
+			
+			
 			
 			console.debug(coefficientValues);
 			
 			 getRgbaArray(coefficientValues, coefficientRgbaArray);
 			
 			// write data to canvas
-			contextInput.putImageData(outputData, 0, 0);
+			contextInput.putImageData(inputData, 0, 0);
 			
 			contextCoefficient.putImageData(coefficientData, 0, 0);
 			
 			// TODO actually calculate output data
 			contextOutput.putImageData(outputData, 0, 0);
 			
+			// save image buttons
+			document.getElementById("save-coefficient").onclick = function() {
+				var saveImg = canvasCoefficient.toDataURL("image/png").replace("image/png", "image/octet-stream");
+				window.location.href = saveImg;
+			}
 			
+			document.getElementById("save-output").onclick = function() {
+				var saveImg = canvasOutput.toDataURL("image/png").replace("image/png", "image/octet-stream");
+				window.location.href = saveImg;
+			}
+				
 			
 			// print entropy
-			document.getElementById("entropy-input").innerHTML = getEntropy(outputRgbaArray);
-			document.getElementById("entropy-output").innerHTML = getEntropy(outputRgbaArray);
+			document.getElementById("entropy-input").innerHTML = getEntropy(inputRgbaArray);
 			document.getElementById("entropy-coefficient").innerHTML = getEntropy(coefficientRgbaArray);
+			document.getElementById("entropy-output").innerHTML = getEntropy(outputRgbaArray);
+			
 		};
 		
 		
 	};
+	
+	
+	
 	
 	/*var reader = new FileReader();
 	reader.onload = function(event) {
