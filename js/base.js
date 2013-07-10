@@ -311,14 +311,14 @@ window.onload = function() {
 			
 			
 			// set canvas widths & heights according to image width & height
-			canvasInput.height = img.height;
-			canvasInput.width = img.width;
+			canvasInput.height = height;
+			canvasInput.width = width;
 			
-			canvasCoefficient.height = img.height;
-			canvasCoefficient.width = img.width;
+			canvasCoefficient.height = height;
+			canvasCoefficient.width = width;
 			
-			canvasOutput.height = img.height;
-			canvasOutput.width = img.width;
+			canvasOutput.height = height;
+			canvasOutput.width = width;
 			
 			contextInput.drawImage(img, 0, 0);
 			
