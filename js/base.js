@@ -103,6 +103,10 @@ function getSquareStandardVariance(histogram) {
 	return Math.round(variance * 100) / 100;
 }
 
+function getStandardVariance(histogram) {
+	return Math.round(Math.sqrt(getSquareStandardVariance(histogram)) * 100) / 100;
+}
+
 function getErrorPattern(orgPixelArray, modPixelArray, offset) {
 	var errorPattern = new Array(orgPixelArray.length);
 	
@@ -441,6 +445,12 @@ window.onload = function() {
 			console.debug(getSquareStandardVariance(histogramInput));
 			console.debug(getSquareStandardVariance(histogramCoefficient));
 			console.debug(getSquareStandardVariance(histogramOutput));
+			console.debug();
+			
+			// print standard variance
+			document.getElementById("stv-input").innerHTML = getStandardVariance(histogramInput);
+			document.getElementById("stv-coefficient").innerHTML = getStandardVariance(histogramCoefficient);
+			document.getElementById("stv-output").innerHTML = getStandardVariance(histogramOutput);
 			
 			// print entropy
 			document.getElementById("entropy-input").innerHTML = getEntropy(inputRgbaArray);
