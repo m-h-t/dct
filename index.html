@@ -9,8 +9,11 @@
 	<script src="js/jquery-2.0.3.js"></script>
 	<script src="js/bootstrap.js"></script>
 	
+	
 	<script type="text/javascript" src="js/base.js"></script>
 	<link href="css/custom.css" rel="stylesheet">
+	
+	<script src="js/bootstrap.file-input.js"></script>
 	
 	<style type="text/css">
       	canvas { image-rendering: optimizeSpeed;             /*                     */
@@ -32,41 +35,41 @@
 		<table class="table">
 			<tr>
 				<th></th>
-				<th class="">Cropped Greyscale Image</th>
-				<th class="">DCT Coefficients</th>
-				<th class="">Reverted Image</th>
+				<th>Cropped Greyscale Image</th>
+				<th>DCT Coefficients</th>
+				<th>Reverted Image</th>
 			</tr>
-			<tr class="">
+			<tr>
 				<th>Pictures</th>
 				<td><canvas id="canvas-input" height="200" width="200"></canvas></td>
 				<td><canvas id="canvas-coefficient" height="200" width="200"></canvas></td>
 				<td><canvas id="canvas-output" height="200" width="200"></canvas></td>
 			</tr>
-			<tr class="">
+			<tr>
 				<th>Entropy</th>
 				<td id="entropy-input"></td>
 				<td id="entropy-coefficient"></td>
 				<td id="entropy-output"></td>
-			</tr class="">
-			<tr class="">
+			</tr>
+			<tr>
 				<th>MSE</th>
 				<td id="mse-input"></td>
 				<td id="mse-coefficient"></td>
 				<td id="mse-output"></td>
-			</tr class="">
-			<tr class="">
+			</tr>
+			<tr>
 				<th>Avg Pixel Value</th>
 				<td id="avg-input"></td>
 				<td id="avg-coefficient"></td>
 				<td id="avg-output"></td>
 			</tr>
-			<tr class="">
+			<tr>
 				<th>Std Variance</th>
 				<td id="stv-input"></td>
 				<td id="stv-coefficient"></td>
 				<td id="stv-output"></td>
-			</tr class="">
-			<tr class="">
+			</tr>
+			<tr>
 				<th></th>
 				<td></td>
 				<td><input id="save-coefficient" class="btn" type="button" value="Save image" /></td>
@@ -76,11 +79,13 @@
 	</div></div>
 	
 	<div class="row spacer120">
-		<div class="span4"><input id="files" type="file" multiple></div>
-		<div class="span5">
+		
+		<div class="span4"><input id="files" type="file" title="Open Image" multiple></div>
+		<div class="span4">
 			<span>DCT-Blocksize: </span><input id="dctblocksize-slider" type="range" min="1" max="64" value="64" />
-			<span id="slider-value">64</span></div>
-		<div class="span3"></div>
+			<span id="slider-value">64</span>
+		</div>
+		
 	</div>
 </div>
 </body>

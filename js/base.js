@@ -338,9 +338,15 @@ function processImage(greyscaleArray, width, height, dctBlockSizeLimit) {
 /************ App ******************/
 
 window.onload = function() {
-
+	
+	// nice input button
+	$(function() {
+			$('input[type=file]').bootstrapFileInput();
+	});
+	
 	// read files
 	var control = document.getElementById("files");
+	
 	control.addEventListener("change", function(event) {
 		var i = 0,
 			files = control.files,
