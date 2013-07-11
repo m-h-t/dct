@@ -1,4 +1,4 @@
-<!DOYTYPE>
+<!DOCTYPE html>
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +19,7 @@
                      image-rendering: -webkit-optimize-contrast; /* Chrome (and Safari) */
                      image-rendering: optimize-contrast;         /* CSS3 Proposed       */
                      -ms-interpolation-mode: nearest-neighbor;   /* IE8+                */
-                     max-width: 325px; } 
+                     max-width: 330px; } 
 	</style>
 </head>
 
@@ -77,8 +77,9 @@
 	
 	<div class="row spacer120">
 		<div class="span4"><input id="files" type="file" multiple></div>
-		<div class="span4"><span>DCT-Blocksize: </span><input id="dctblocksize-slider" type="range" min="1" max="64" value="64" /></div>
-		<div class="span1"><span id="slider-value">64</span></div>
+		<div class="span5">
+			<span>DCT-Blocksize: </span><input id="dctblocksize-slider" type="range" min="1" max="64" value="64" />
+			<span id="slider-value">64</span></div>
 		<div class="span3"></div>
 	</div>
 </div>
