@@ -60,6 +60,13 @@ function getHistogram(pixelArray) {
 	return frequencies;
 }
 
+function getMse(errorPixel) {
+	var histogram = getHistogram(errorPixel);
+	
+	return getSquareStandardVariance(histogram);
+	
+}
+
 function getArithmeticAverage(histogram) {
 	var arithmeticAverage = 0;
 	var values = 0;
@@ -77,15 +84,30 @@ function getArithmeticAverage(histogram) {
 	return  Math.round(arithmeticAverage * 100) / 100;
 }
 
-function getSquareStandardVariance() {
+function getSquareStandardVariance(histogram) {
+	var avg = getArithmeticAverage(histogram);
+	var values = 0;
+	var variance = 0;
 	
+	for (var i = 0; i < histogram.length; i++) {
+		values += histogram[i];
+	}
+	
+	for (var i = 0; i < histogram.length; i++) {
+		if (histogram[i] != 0) {
+			variance += (Math.pow((i - avg), 2)) * (histogram[i] / values);
+		}
+	}
+	
+	
+	return Math.round(variance * 100) / 100;
 }
 
 function getErrorPattern(orgPixelArray, modPixelArray, offset) {
-	var errorPattern = new Array(Uint8ClampedArray);
+	var errorPattern = new Array(orgPixelArray.length);
 	
 	for (var i = 0; i < orgPixelArray.length; i++) {
-		errorPattern[i] = orgPixelArray - modPixelArray + offset;
+		errorPattern[i] = orgPixelArray[i] - modPixelArray[i] + offset;
 	}
 	
 	return errorPattern;
@@ -384,8 +406,6 @@ window.onload = function() {
 			// get cropped, into greyscale converted image
 			var greyscalePixelArray = getCroppedArray(getGreyValueArray(inputRgbaArray), img.width, img.height);
 			
-			console.debug(getHistogram(greyscalePixelArray));
-			
 			// process greyscale array
 			var resultArrays = processImage(greyscalePixelArray, width, height, dctBlockSizeLimit);
 			
@@ -416,6 +436,12 @@ window.onload = function() {
 			var histogramCoefficient = getHistogram(resultArrays[1]);
 			var histogramOutput = getHistogram(resultArrays[2]);
 			
+			var testHistogram = [0,0,1,2,0,1,0,1];
+			
+			console.debug(getSquareStandardVariance(histogramInput));
+			console.debug(getSquareStandardVariance(histogramCoefficient));
+			console.debug(getSquareStandardVariance(histogramOutput));
+			
 			// print entropy
 			document.getElementById("entropy-input").innerHTML = getEntropy(inputRgbaArray);
 			document.getElementById("entropy-coefficient").innerHTML = getEntropy(coefficientRgbaArray);
@@ -425,6 +451,9 @@ window.onload = function() {
 			document.getElementById("avg-input").innerHTML = getArithmeticAverage(histogramInput);
 			document.getElementById("avg-coefficient").innerHTML = getArithmeticAverage(histogramCoefficient);
 			document.getElementById("avg-output").innerHTML = getArithmeticAverage(histogramOutput);
+			
+			// print mse
+			document.getElementById("mse-output").innerHTML = getMse(getErrorPattern(resultArrays[0], resultArrays[2], 0));
 			
 		};
 		
