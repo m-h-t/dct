@@ -430,15 +430,27 @@ window.onload = function() {
 			contextCoefficient.putImageData(coefficientData, 0, 0);
 			contextOutput.putImageData(outputData, 0, 0);
 			
-			// save image buttons
+			// save image buttons - only working in chrome atm
 			document.getElementById("save-coefficient").onclick = function() {
-				var saveImg = canvasCoefficient.toDataURL("image/png").replace("image/png", "image/octet-stream");
-				window.location.href = saveImg;
+				var link = document.createElement('a')
+				
+				link.href = canvasCoefficient.toDataURL("image/png").replace("image/png", "image/octet-stream");
+				link.download = "coefficient.png";
+				link.click();
+				
+				//var saveImg = canvasCoefficient.toDataURL("image/png").replace("image/png", "image/octet-stream");
+				//window.location.href = saveImg;
 			}
 			
 			document.getElementById("save-output").onclick = function() {
-				var saveImg = canvasOutput.toDataURL("image/png").replace("image/png", "image/octet-stream");
-				window.location.href = saveImg;
+				var link = document.createElement('a')
+				
+				link.href = canvasOutput.toDataURL("image/png").replace("image/png", "image/octet-stream");
+				link.download = "reconverted.png";
+				link.click();
+				
+				//var saveImg = canvasOutput.toDataURL("image/png").replace("image/png", "image/octet-stream");
+				//window.location.href = saveImg;
 			}
 				
 			/************ stats *********/
@@ -483,6 +495,10 @@ window.onload = function() {
 			dctBlockSizeLimit = (this).value - 1;
 			img.onload();
 		}
+		
+		// activate save file buttons
+		$("#save-coefficient").removeClass("disabled");
+		$("#save-output").removeClass("disabled");
 	};
 	
 	reader.onerror = function(event) {
